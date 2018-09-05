@@ -1,0 +1,9 @@
+
+fpm.h, fpm.c --- Contains implementation of load-imbalancing
+                 data partitioners
+
+transpose.h, transpose.c
+             --- Contains local transpose of a signal matrix
+
+mpicomm.h, mpicomm.c
+             --- Contains MPI implementations of tranpose

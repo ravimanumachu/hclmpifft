@@ -1,0 +1,45 @@
+########################################################################
+#
+#  Instructions to use hclmpifft
+#
+########################################################################
+
+Required software:
+
+1. C compiler
+2. FFTW, Intel MKL FFT
+3. MPI Package
+
+Instructions for FFTW
+---------------------
+
+1). Install FFTW-3.3.7 using the following commands:
+
+$ tar zxvf fftw-3.3.7.tar.gz
+$ cd fftw-3.3.7
+$ ./configure --prefix=./FFTW_INSTALL --enable-mpi --enable-threads --with-combined-threads --enable-sse2 --with-our-malloc16
+$ make
+$ make install
+
+2). Export the following variable:
+
+$ export FFTWHOME=`pwd`/fftw-3.3.7/FFTW_INSTALL
+
+3). cd ../fftw
+
+4). make
+
+Instructions for Intel MKL FFT
+------------------------------
+
+1). cd intelmkl
+2). make
+
+-------------------------------------------------------------------------
+
+Please send your feedback, bugs, and questions to:
+
+E-mail: Juan-Antonio Rico-Gallego (jarico@unex.es)
+        Ravi Reddy Manumachu (ravi.manumachu@ucd.ie)
+
+-------------------------------------------------------------------------
