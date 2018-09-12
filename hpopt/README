@@ -17,7 +17,7 @@ Replace '<HPOPT root directory>' by the directory where HPOPT is downloaded.
 
 2). mkdir build
 3). cd build
-4). cmake -DCMAKE_INSTALL_PREFIX=<HPOPT Installation Directory> ..
+4). cmake -DCMAKE_INSTALL_PREFIX=$PWD/../HPOPT_INSTALL ..
 
 Replace '<HPOPT Installation Directory>' by the directory where
 HetDist installation files (libraries, binaries) should be placed.

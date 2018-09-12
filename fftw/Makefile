@@ -17,6 +17,10 @@ FFTWLIBDIR      =       ${FFTWHOME}/lib
 
 #---------------------------------------------------#
 
+HOPTINCLUDES	=	../hpopt/HPOPT_INSTALL/include
+
+#---------------------------------------------------#
+
 COMMONINCLUDES	=	../common
 EXES		=	mpifftw
 SRC		=	mpifftw.c \
@@ -31,6 +35,7 @@ all: mpifftw
 
 mpifftw:
 	${MPICC} ${COPTFLAGS} ${OMPFLAGS} -I${COMMONINCLUDES} \
+		-I${HOPTINCLUDES} \
 		-I${FFTWINCLUDES} -o $@ \
 		${SRC} -L${FFTWLIBDIR} \
 		-lfftw3_mpi -lfftw3 -lm

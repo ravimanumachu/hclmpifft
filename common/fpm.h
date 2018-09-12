@@ -19,8 +19,9 @@ int determineRowDistributionLB(
 
 int determineRowDistributionLIMB(
     const int n, const int p,
-    const size_t* psizes, const double* speeds,
-    int* rowd
+    const unsigned int* npoints,
+    const unsigned int* psizes, const double* etimes,
+    unsigned int* dOpt
 );
 
 /*----------------------------------------------------------------*/

@@ -186,7 +186,8 @@ int main(int argc, char **argv)
        }
     }
 
-    int* rowd = (int*)malloc(p*sizeof(int));
+    unsigned int* rowd = (unsigned int*)malloc(
+                         p*sizeof(unsigned int));
     if (me == 0)
     {
        if (lb)
@@ -200,11 +201,12 @@ int main(int argc, char **argv)
           /*
            * Determine row distribution from FPMs
            */
-          size_t* psizes;
-          double* speeds;
+          unsigned int* npoints;
+          unsigned int* psizes;
+          double* etimes;
           determineRowDistributionLIMB(
              n, p,
-             psizes, speeds,
+             npoints, psizes, etimes,
              rowd);
        }
     }
@@ -222,7 +224,8 @@ int main(int argc, char **argv)
        exit(EXIT_SUCCESS);
     }
 
-    int* rowdlocal = (int*)malloc(ngroups*sizeof(int));
+    unsigned int* rowdlocal = (unsigned int*)malloc(
+                              ngroups*sizeof(unsigned int));
     if (lb)
     {
        determineRowDistributionLB(
@@ -233,11 +236,12 @@ int main(int argc, char **argv)
        /*
         * Determine row distribution from FPMs
         */
-       size_t* psizes;
-       double* speeds;
+       unsigned int* npoints;
+       unsigned int* psizes;
+       double* etimes;
        determineRowDistributionLIMB(
           rowd[me], ngroups,
-          psizes, speeds,
+          npoints, psizes, etimes,
           rowdlocal);
     }
 
