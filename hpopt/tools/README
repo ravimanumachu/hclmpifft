@@ -1,0 +1,7 @@
+Tools
+-----
+
+partitioning - Finds 'Load-Equal', 'Load-Balance' and 'Heterogeneous' workload distribution using 
+							performance functions.
+
+func_generator - Creates random performance functions.

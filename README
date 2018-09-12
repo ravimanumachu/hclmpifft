@@ -8,7 +8,8 @@ Required software:
 
 1. C compiler
 2. FFTW, Intel MKL FFT
-3. MPI Package
+3. HPOPT library
+4. MPI Package
 
 Instructions for FFTW
 ---------------------
@@ -34,6 +35,12 @@ Instructions for Intel MKL FFT
 
 1). cd intelmkl
 2). make
+
+Instructions for HPOPT
+----------------------
+
+1). cd hpopt
+2). Follow instructions in README
 
 -------------------------------------------------------------------------
 

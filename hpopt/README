@@ -1,0 +1,40 @@
+
+A tool for performance optimization on Heterogeneous Systems using workload distribution and 
+Performance functions.
+-----------------------------------------------------------------------
+
+The following packages are required for compilation:
+1. cmake
+2. Doxygen
+
+-----------------------------------------------------------------------
+
+To build and install:
+
+1). cd <HPOPT root directory>
+
+Replace '<HPOPT root directory>' by the directory where HPOPT is downloaded.
+
+2). mkdir build
+3). cd build
+4). cmake -DCMAKE_INSTALL_PREFIX=<HPOPT Installation Directory> ..
+
+Replace '<HPOPT Installation Directory>' by the directory where
+HetDist installation files (libraries, binaries) should be placed.
+
+5). make
+6). make doc
+7). make install
+
+Please send your feedback, bugs, and questions to:
+
+E-mail: hamidreza.khaleghzadeh@ucdconnect.ie
+Hamidreza Khaleghzadeh
+PhD Researcher
+Heterogeneous Computing Laboratory
+University College Dublin
+Dublin-4
+Ireland
+http://hcl.ucd.ie
+
+-----------------------------------------------------------------------
