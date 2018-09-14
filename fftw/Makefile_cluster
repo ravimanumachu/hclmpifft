@@ -1,0 +1,46 @@
+
+####################################################
+#
+#    To create mpifftw...
+#
+####################################################
+
+CC              =       gcc
+MPICC           =       mpicc
+COPTFLAGS       =       -O3 -pthread
+OMPFLAGS        =       -fopenmp
+
+#---------------------------------------------------#
+
+FFTWINCLUDES    =       ${FFTWHOME}/include
+FFTWLIBDIR      =       ${FFTWHOME}/lib
+
+XPMLIBDIR       =       /opt/cray/xpmem/default/lib64
+ALPLIBDIR       =       /opt/cray/alps/default/lib64
+
+#---------------------------------------------------#
+
+COMMONINCLUDES	=	../common
+EXES		=	mpifftw
+SRC		=	mpifftw_cluster.c \
+			../common/fpm.c \
+            		../tauloplib/transpose.c \
+			../tauloplib/mpicomm.c \
+			../common/initmatrix.c \
+			fftw_cluster.c
+
+#---------------------------------------------------#
+
+all: mpifftw
+
+mpifftw:
+	${MPICC} ${COPTFLAGS} ${OMPFLAGS} -I${COMMONINCLUDES} \
+		-I${FFTWINCLUDES} -o $@ \
+		${SRC} -L${FFTWLIBDIR} \
+		-L${XPMLIBDIR} -L${ALPLIBDIR} \
+		-lfftw3_mpi -lfftw3 -lm
+
+clean:
+	rm -f ${EXES}
+
+#---------------------------------------------------#

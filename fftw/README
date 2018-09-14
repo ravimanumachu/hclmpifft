@@ -1,0 +1,15 @@
+Files in this directory are duplicated:
+
+<filename> are original files (wrking in a node)
+<filename>_cluster are files which work in the Hazel Hen cluster (HLRS). 
+
+Cluster files include a set of changes, as not to allocate all the matrices 
+in every node (but only the rows they deal with). They are implemented
+as a benchmark for measuring performance in the cluster.
+
+
+-------
+
+Ravi Reddy Manumachu (UCD)
+Juan A. Rico-Gallego (UEX)
+

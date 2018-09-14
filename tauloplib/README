@@ -1,0 +1,13 @@
+
+transpose.h, transpose.c
+             --- Contains local transpose of a signal (Homogeneous and Heterogeneous) matrix
+
+mpicomm.h, mpicomm.c
+             --- Contains MPI implementations of tranpose (Homogeneous and Heterogeneous matrices)
+
+
+To be done:
+
+- Heterogeneous implementation
+  a) Local (threads-based)
+  b) MPI code
