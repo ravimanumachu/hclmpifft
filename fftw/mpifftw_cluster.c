@@ -7,9 +7,9 @@
 
 /*-----------------------------------------------------------*/
 
-#include "hclfftw.h"
-#include "initmatrix.h"
-#include "fpm.h"
+#include "hclfftw_cluster.h"
+#include "../common/initmatrix.h"
+#include "fpm_cluster.h"
 #include "mpicomm.h"
 
 /*-----------------------------------------------------------*/

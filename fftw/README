@@ -1,11 +1,27 @@
 Files in this directory are duplicated:
 
-<filename> are original files (wrking in a node)
+<filename> are original files (working on a node)
 <filename>_cluster are files which work in the Hazel Hen cluster (HLRS). 
 
 Cluster files include a set of changes, as not to allocate all the matrices 
 in every node (but only the rows they deal with). They are implemented
 as a benchmark for measuring performance in the cluster.
+Changes in other files in ../common directory are needed, hence, duplicate for those files are on ../tauloplib.
+
+
+Compiling and executing:
+------------------------
+
+1) Load modules and:
+export FFTWHOME=$HOME/software/hclmpifft/fftw-3.3.7
+
+2) make clean
+make -f Makefile_cluster
+
+3) ./fftw2_script.sh <N>
+with N=size of the matrix (square)
+
+Note that this code is tested in HLRS Hazel Hen and configurations, modules and others must be changed to meet other platforms. Start point: Makefile_cluster
 
 
 -------

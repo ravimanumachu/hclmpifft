@@ -20,11 +20,11 @@ ALPLIBDIR       =       /opt/cray/alps/default/lib64
 
 #---------------------------------------------------#
 
-COMMONINCLUDES	=	../common
+COMMONINCLUDES	=	../tauloplib
 EXES		=	mpifftw
 SRC		=	mpifftw_cluster.c \
-			../common/fpm.c \
-            		../tauloplib/transpose.c \
+			../tauloplib/fpm_cluster.c \
+            ../tauloplib/transpose.c \
 			../tauloplib/mpicomm.c \
 			../common/initmatrix.c \
 			fftw_cluster.c

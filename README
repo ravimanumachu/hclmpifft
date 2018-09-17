@@ -42,6 +42,16 @@ Instructions for HPOPT
 1). cd hpopt
 2). Follow instructions in README
 
+
+Instructions for Cluster Homogeneous HCL FFTW
+---------------------------------------------
+
+1). cd ./fftw
+2). Modify Makefile_cluster accordingly
+3). make -f Makefile_cluster
+
+
+
 -------------------------------------------------------------------------
 
 Please send your feedback, bugs, and questions to:
