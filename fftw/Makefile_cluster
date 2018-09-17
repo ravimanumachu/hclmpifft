@@ -24,10 +24,10 @@ COMMONINCLUDES	=	../tauloplib
 EXES		=	mpifftw
 SRC		=	mpifftw_cluster.c \
 			../tauloplib/fpm_cluster.c \
-            ../tauloplib/transpose.c \
+            		../tauloplib/transpose.c \
 			../tauloplib/mpicomm.c \
 			../common/initmatrix.c \
-			fftw_cluster.c
+			fftw.c
 
 #---------------------------------------------------#
 

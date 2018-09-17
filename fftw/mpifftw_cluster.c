@@ -7,7 +7,7 @@
 
 /*-----------------------------------------------------------*/
 
-#include "hclfftw_cluster.h"
+#include "../common/hclfftw.h"
 #include "../common/initmatrix.h"
 #include "fpm_cluster.h"
 #include "mpicomm.h"
@@ -290,8 +290,8 @@ int main(int argc, char **argv) {
         
         // 8.b.I) FFTW (1)
         double tm_comp_start = MPI_Wtime();
-        //fftwlocal(FFTW_FORWARD, rowdlocal, n, nthreadspergroup, ngroups, lMatrix, tGroups);
-        fftwlocal_process(FFTW_FORWARD, rowdlocal /*rowd[me]*/, n, nthreadspergroup, ngroups, lMatrix, tGroups);
+        fftwlocal(FFTW_FORWARD, rowdlocal, n, nthreadspergroup, ngroups, lMatrix, tGroups);
+        //fftwlocal_process(FFTW_FORWARD, rowdlocal /*rowd[me]*/, n, nthreadspergroup, ngroups, lMatrix, tGroups);
         double tm_comp_end = MPI_Wtime();
         comp_times[k] = tm_comp_end - tm_comp_start;
         
@@ -303,8 +303,8 @@ int main(int argc, char **argv) {
         
         // 8.b.III) FFTW (2)
         double tm_comp_start2 = MPI_Wtime();
-        //fftwlocal(FFTW_FORWARD, rowdlocal, n, nthreadspergroup, ngroups, lMatrix, tGroups);
-        fftwlocal_process(FFTW_FORWARD, rowdlocal /*rowd[me]*/, n, nthreadspergroup, ngroups, lMatrix, tGroups);
+        fftwlocal(FFTW_FORWARD, rowdlocal, n, nthreadspergroup, ngroups, lMatrix, tGroups);
+        //fftwlocal_process(FFTW_FORWARD, rowdlocal /*rowd[me]*/, n, nthreadspergroup, ngroups, lMatrix, tGroups);
         double tm_comp_end2 = MPI_Wtime();
         comp_times2[k] = tm_comp_end2 - tm_comp_start2;
         
@@ -322,6 +322,7 @@ int main(int argc, char **argv) {
             fflush(stdout);
         }
         
+        
         if (test_transpose_m == 1) {
             
             if (test_transpose(rowd[me], n, lMatrix)) {
@@ -334,6 +335,7 @@ int main(int argc, char **argv) {
             }
             
         }
+         
         
     }
     
@@ -417,7 +419,7 @@ int main(int argc, char **argv) {
         fftw_cleanup_threads();
     }
     
-    // 10) ONLY FOR TESTING (Gather matrices and test)
+    // 10) ONLY FOR TESTING (Gather matrix rows and test)
     if (test_transpose_m) {
         MPI_Gatherv(lMatrix, localnelements,
                     MPI_C_DOUBLE_COMPLEX,

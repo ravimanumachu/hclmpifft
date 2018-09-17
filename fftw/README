@@ -1,27 +1,27 @@
 Files in this directory are duplicated:
 
-<filename> are original files (working on a node)
-<filename>_cluster are files which work in the Hazel Hen cluster (HLRS). 
+mpifftw.c is original file (working in a node)
+mpifftw_cluster.c is the file which work in the Hazel Hen cluster (HLRS).
 
-Cluster files include a set of changes, as not to allocate all the matrices 
-in every node (but only the rows they deal with). They are implemented
+Cluster file includes a set of changes, as not to allocate all the matrices
+in every node (but only the rows everyone is going to calculate). It is implemented
 as a benchmark for measuring performance in the cluster.
-Changes in other files in ../common directory are needed, hence, duplicate for those files are on ../tauloplib.
 
+Makefile_cluster is a Makefile to compile mpifftw_cluster.c:
 
-Compiling and executing:
-------------------------
+$ <load modules and export FFTWHOME=$HOME/software/hclmpifft/fftw-3.3.7>
+$ make clean
+$ make -f Makefile_cluster
 
-1) Load modules and:
-export FFTWHOME=$HOME/software/hclmpifft/fftw-3.3.7
+fftw2_script.sh is an example of script for launching "mpifftw" executable. Script takes as a parameter the size of the (square) matrix.
+Executable mpifftw takes the following parameters:
+N: size of the (square) matrix
+Q: number of groups threads in a node (processes per node)
+t: Number of threads in each group
+LB: load balanced or not
+v: verbose mode
+NReps: number of repetitions of the FFTW kernel (benchmarking)
 
-2) make clean
-make -f Makefile_cluster
-
-3) ./fftw2_script.sh <N>
-with N=size of the matrix (square)
-
-Note that this code is tested in HLRS Hazel Hen and configurations, modules and others must be changed to meet other platforms. Start point: Makefile_cluster
 
 
 -------
