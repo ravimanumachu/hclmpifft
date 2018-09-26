@@ -6,12 +6,3 @@ mpicomm.h, mpicomm.c
              --- Contains MPI implementations of tranpose (Homogeneous and Heterogeneous matrices)
 
 
-I duplicate here some files for cluster code:  hclfftw.h, fpm_cluster.c and fpm_cluster.h.
-Changes consist mainline function parameters and how processes (and threads per process) deals with the data in their matrix rows.
-
-
-(To be done:)
-
-- Heterogeneous implementation
-  a) Local (threads-based)
-  b) MPI code

@@ -21,17 +21,6 @@ int mpitranspose(
 );
 
 
-
-int hettranspose(
-                 const int p,
-                 const int *rowd,
-                 const int ngroups,
-                 const int nthreadspergroup,
-                 const int *rowdlocal,
-                 const int n, 
-                 fftw_complex* gMatrix
-                 );
-
 /*----------------------------------------------------------------*/
 
 #endif /* _HCLFFTCOMM_HH */

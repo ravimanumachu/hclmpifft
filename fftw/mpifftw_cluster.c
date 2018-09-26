@@ -19,34 +19,57 @@ int test_transpose_m = 0;
 
 /* Not deep tests. Make two transposes and
  the matrix must be the original */
-int test_transpose (const int m, const int n, fftw_complex* lMatrix) {
+int test_transpose (const int *m, const int n, fftw_complex* lMatrix) {
     
     
-    int p, q;
-    int rank;
-    double v;
+    int     p, q;
+    int     me;
+    double  v;
+    int     my_error = 0;
+    int     P;
     
-    MPI_Comm_rank (MPI_COMM_WORLD, &rank);
+    MPI_Comm_rank (MPI_COMM_WORLD, &me);
+    MPI_Comm_size (MPI_COMM_WORLD, &P);
     
-    for (p = 0; p < m; p++)
+    int     errors[P];
+    
+    int start_m = 1;
+    for (int i = 0; i < me; i++) {
+        start_m += (m[i] * n);
+    }
+    
+    for (p = 0; p < m[me]; p++)
     {
         for (q = 0; q < n; q++)
         {
-            v = (rank * m * n) + p*n+q;
+            //v = (me * start_m * n) + p*n+q + 1;
+            v = start_m + (p * n + q);
             
             if (lMatrix[p*n+q][0] != v) {
-                fprintf(stdout, "[%d]: in (%d,%d):  required: %0.6f  obtained %0.6f\n", rank, p, q, v, lMatrix[p*n+q][0]);
+                fprintf(stdout, "[%d]: in [%d,%d]:  expected: %0.6f  obtained %0.6f\n", me, p, q, v, lMatrix[p*n+q][0]);
                 fflush(stdout);
-                return (EXIT_FAILURE);
+                my_error = 1;
             }
         }
     }
     
-    if (rank == 0) {
-        fprintf(stdout, "Testing completed without errors.\n");
-    }
+    MPI_Gather(&my_error, 1, MPI_INT, errors, 1, MPI_INT, 0, MPI_COMM_WORLD);
     
-    return (EXIT_SUCCESS);
+    if (me == 0) {
+        for (int i = 0; i < P; i++) {
+            if (errors[i]) {
+                my_error = 1;
+            }
+        }
+        if (my_error == 0) {
+            fprintf(stderr, "NO PROBLEM reported by any process in transpose.\n");
+            fflush(stderr);
+        }
+    }
+
+    MPI_Bcast (&my_error, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    
+    return (my_error);
 }
 
 
@@ -185,10 +208,6 @@ int main(int argc, char **argv) {
         exit(EXIT_SUCCESS);
     }
     
-    if (verbosity) {
-        fprintf(stdout, "[%d] rowd: %d \n", me, rowd[me]); fflush(stdout);
-    }
-    
     // 4) Determine row local distribution (homogeneous or using FPMs)
     int *rowdlocal = (int *) malloc (nthreadspergroup * sizeof(int));
     if (lb) {
@@ -200,7 +219,7 @@ int main(int argc, char **argv) {
     }
     
     if (verbosity) {
-        printf("Num groups %d, Threads per group %d, %d: My rowd %d. Rowd local: ",
+        printf("Num groups %d, Threads per group %d, %d: My rowd (%d). Rowd local: ",
                ngroups, nthreadspergroup, me, rowd[me]);
         
         for (int g = 0; g < nthreadspergroup; g++) {
@@ -233,19 +252,35 @@ int main(int argc, char **argv) {
         
         hclFillSignal2D(n, n, nthreadspergroup * ngroups, gMatrix);
         
-        if (me == 0) {
-            localn = (int *) malloc (p * sizeof(int));
-            for (int proc = 0; proc < p; proc++) {
-                localn[proc] = rowd[proc] * n;
-            }
-            
-            displs = (int *) malloc (p * sizeof(int));
-            displs[0] = 0;
-            for (int proc = 1; proc < p; proc++) {
-                displs[proc] = displs[proc-1] + localn[proc-1];
-            }
+        localn = (int *) malloc (p * sizeof(int));
+        for (int proc = 0; proc < p; proc++) {
+            localn[proc] = rowd[proc] * n;
         }
         
+        displs = (int *) malloc (p * sizeof(int));
+        displs[0] = 0;
+        for (int proc = 1; proc < p; proc++) {
+            displs[proc] = displs[proc-1] + localn[proc-1];
+        }
+        
+        /*
+        if (verbosity) {
+            fprintf(stdout, "localn:  ");
+            for (int i = 0; i < p; i++) {
+                fprintf(stdout, "%d ", localn[i]);
+            }
+            fprintf(stdout, "\n");
+            
+            fprintf(stdout, "displs:  ");
+            for (int i = 0; i < p; i++) {
+                fprintf(stdout, "%d ", displs[i]);
+            }
+            fprintf(stdout, "\n");
+        }
+         */
+    }
+    
+    if (test_transpose_m) {
         MPI_Scatterv(
                      gMatrix, localn, displs,
                      MPI_C_DOUBLE_COMPLEX,
@@ -253,11 +288,11 @@ int main(int argc, char **argv) {
                      MPI_C_DOUBLE_COMPLEX,
                      0,
                      MPI_COMM_WORLD);
-        
     }
+
     
     if (verbosity && (me == 0)) {
-        printf("Global signal matrix before...\n");
+        fprintf(stdout, "Global signal matrix before...\n");
         hclPrintSignal2D(n, n, gMatrix);
     }
     
@@ -291,7 +326,6 @@ int main(int argc, char **argv) {
         // 8.b.I) FFTW (1)
         double tm_comp_start = MPI_Wtime();
         fftwlocal(FFTW_FORWARD, rowdlocal, n, nthreadspergroup, ngroups, lMatrix, tGroups);
-        //fftwlocal_process(FFTW_FORWARD, rowdlocal /*rowd[me]*/, n, nthreadspergroup, ngroups, lMatrix, tGroups);
         double tm_comp_end = MPI_Wtime();
         comp_times[k] = tm_comp_end - tm_comp_start;
         
@@ -301,10 +335,31 @@ int main(int argc, char **argv) {
         double tm_comm_end = MPI_Wtime();
         comm_times[k] = tm_comm_end - tm_comm_start;
         
+        
+        /* TEMPORAL: Mostrar la traspouesta
+        MPI_Barrier(MPI_COMM_WORLD);
+        sleep(me);
+        for (int i = 0; i < rowd[me]; i++)
+        {
+            for (int j = 0; j < n; j++)
+            {
+                fprintf(stdout, "%2.1f  ", lMatrix[i*n+j][0]);
+                fflush(stdout);
+            }
+            fprintf(stdout, "\n");
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+        if (me == 0) {
+            fprintf(stdout, "\n");
+        }
+        sleep(1);
+         */
+        
+        
+        
         // 8.b.III) FFTW (2)
         double tm_comp_start2 = MPI_Wtime();
         fftwlocal(FFTW_FORWARD, rowdlocal, n, nthreadspergroup, ngroups, lMatrix, tGroups);
-        //fftwlocal_process(FFTW_FORWARD, rowdlocal /*rowd[me]*/, n, nthreadspergroup, ngroups, lMatrix, tGroups);
         double tm_comp_end2 = MPI_Wtime();
         comp_times2[k] = tm_comp_end2 - tm_comp_start2;
         
@@ -318,22 +373,18 @@ int main(int argc, char **argv) {
         
         // Tests and progress
         if (verbosity && me == 0) {
-            fprintf(stdout, "Rep: %d of %d\n", k, NREPS);
+            fprintf(stdout, "Rep: %d of %d\n", k+1, NREPS);
             fflush(stdout);
         }
         
         
         if (test_transpose_m == 1) {
-            
-            if (test_transpose(rowd[me], n, lMatrix)) {
-                if (me == 0) {
-                    fprintf(stderr, "ERROR in transposition.\n Aborting ...\n");
-                    fflush(stderr);
-                }
-                MPI_Finalize();
-                return EXIT_FAILURE;
+            if (test_transpose(rowd, n, lMatrix)) {
+                //MPI_Finalize();
+                //return(EXIT_FAILURE);
+                fprintf(stderr, "***   ERROR in transpose reported by process  %d.\n", me);
+                fflush(stderr);
             }
-            
         }
          
         
