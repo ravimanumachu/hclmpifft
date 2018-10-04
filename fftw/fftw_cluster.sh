@@ -15,4 +15,4 @@ module load mpi/openmpi/3.0.0-gnu-7.2.0
 
 # Launch the parallel job to the allocated compute nodes
 # mpirun -n 4 ../fftw/mpifftw  2048 4 6 1 0 > my_output_file 2>&1
-mpirun -n $1  --map-by socket:span --bind-to core -report-bindings --display-map  -nooversubscribe ../fftw/mpifftw  $2 4 6 1 0 5
+mpirun -n $1  --map-by socket:span --bind-to core -report-bindings --display-map  -nooversubscribe ../fftw/mpifftw_cluster  $2 4 6 1 0

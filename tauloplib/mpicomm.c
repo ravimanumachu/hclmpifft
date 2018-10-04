@@ -2,70 +2,203 @@
 /*----------------------------------------------------------------*/
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <mpi.h>
 #include "mpicomm.h"
 #include "transpose.h"
 
+// Testing and debugging transpose
+const int test_transpose = 0;
+const int MATRIX_PRINT_SIZE = 20;
+
 
 /*----------------------------------------------------------------*/
+// Headers of the transpose algorithms
 
 
+// decide if a transpose is for a homogeneously distributed matrix or not.
+static int isHomogeneous (const int *rowd, const int P);
 
+
+// Homogeneous transpose.
+// Using MPI_Alltoall and threads to transpose blocks locally.
 static int HOM_transpose (const int P,
                           const int *rowd,
                           const int ngroups,
                           const int nthreadspergroup,
                           const int *rowdlocal,
                           const int n,
-                          fftw_complex* gMatrix);
+                          fftw_complex* signal);
 
-
+// Heterogeneous transpose
+// Use MPI_Alltoallw, with additional memory to temporary store data
 static int HET_transpose (const int P,
                           const int *rowd,
                           const int ngroups,
                           const int nthreadspergroup,
                           const int *rowdlocal,
                           const int n,
-                          fftw_complex* gMatrix);
+                          fftw_complex* signal);
 
 
-
-static int isHomogeneous (const int *rowd, const int P);
-
-
-
-
+// Heterogeneous transpose
+// Use MPI_Send/MPI_Recv and minimizes the additional allocated memory
 static int HET_transpose_2 (const int P,
                             const int *rowd,
                             const int ngroups /* NOT USED */,
                             const int nthreadspergroup,
                             const int *rowdlocal /* NOT USED */,
                             const int N,
-                            fftw_complex* gMatrix);
+                            fftw_complex* signal);
+
 
 /*----------------------------------------------------------------*/
 
+// Auxiliary functions: test and debugging
 
 
-int mpitranspose(
-                 const int p,
-                 const int *rowd,
-                 const int ngroups /* NOT USED */,
-                 const int nthreadspergroup,
-                 const int *rowdlocal /* NOT USED */,
-                 const int N,
-                 fftw_complex* gMatrix
-                 )
-{
+// Fill matrix "signal" with a simple pattern to being able to test transposition.
+int mpi_hclFillSignal2D(const int *m, const int n, const unsigned int nt, fftw_complex* signal) {
     
-    if (isHomogeneous(rowd, p)) {
-        
-        return HOM_transpose (p, rowd, ngroups, nthreadspergroup, rowdlocal, N, gMatrix);
-        
-    } else {
-        
-        return HET_transpose (p, rowd, ngroups, nthreadspergroup, rowdlocal, N, gMatrix);
+    int  p, q;
+    int  me;
+    
+    MPI_Comm_rank(MPI_COMM_WORLD, &me);
+    
+    // Starting at ...
+    int  prev = 0;
+    for (int i = 0; i < me; i++) {
+        prev += m[i];
     }
+    prev = prev * n + 1;
+    int  my_m = m[me];
+    
+    // Fill with consecutive numbers
+#pragma omp parallel for shared(signal) private(p) num_threads(nt)
+    for (p = 0; p < my_m; p++)
+    {
+        for (q = 0; q < n; q++)
+        {
+            signal[p*n+q][0] = prev + (p*n+q);
+            signal[p*n+q][1] = prev + (p*n+q);
+        }
+    }
+    
+    return 0;
+}
+
+
+// Print matrix only if short enough
+int mpi_hclPrintSignal2D(const int *rowd, const int n, const fftw_complex* signal) {
+    
+    int  me;
+    int  P;
+    
+    MPI_Comm_size(MPI_COMM_WORLD, &P);
+    MPI_Comm_rank(MPI_COMM_WORLD, &me);
+    
+    // Too large to print
+    if (n > MATRIX_PRINT_SIZE) return -1;
+    
+    // As matrices to print are quite short, and this function is intended for testing, we can gather
+    //  data in a temporal buffer on rank 0. No problems of memory expected.
+    int* localn = NULL;
+    int* displs = NULL;
+    fftw_complex *tmpbuf = NULL;
+    int m = 0;
+
+    if (me == 0) {
+        
+        for (int p = 0; p < P; p++) {
+            m += rowd[p];
+        }
+        
+        int complex_size;
+        MPI_Type_size(MPI_C_DOUBLE_COMPLEX, &complex_size);
+        
+        tmpbuf = (fftw_complex *) malloc (m * n * complex_size);
+        if (tmpbuf == NULL) {
+            fprintf(stderr, "Memory allocation failure.\n");
+            exit(EXIT_FAILURE);
+        }
+        
+        localn = (int *) malloc (P * sizeof(int));
+        for (int p = 0; p < P; p++) {
+            localn[p] = rowd[p] * n;
+        }
+        
+        displs = (int *) malloc (P * sizeof(int));
+        displs[0] = 0;
+        for (int p = 1; p < P; p++) {
+            displs[p] = displs[p-1] + localn[p-1];
+        }
+    }
+    
+    MPI_Gatherv(signal, rowd[me] * n, MPI_C_DOUBLE_COMPLEX,
+                tmpbuf, localn, displs, MPI_C_DOUBLE_COMPLEX,
+                0, MPI_COMM_WORLD);
+    
+    if (me == 0) {
+        
+        for (int p = 0; p < m; p++) {
+            for (int q = 0; q < n; q++) {
+                fprintf(stdout,
+                        "[%4.1lf + %4.1lf]",
+                        tmpbuf[p*n+q][0],
+                        tmpbuf[p*n+q][1]);
+            }
+            fprintf(stdout, "\n");
+        }
+    }
+    
+    if (me == 0) {
+        free(localn);
+        free(displs);
+        free(tmpbuf);
+    }
+    
+    return 0;
+}
+
+
+
+
+// Not deep tests: test if a transpose filled with the "consecutive" pattern has been
+//  correctly transposed
+int mpi_hclTestSignalTranspose2D (const int *m, const int n, fftw_complex* signal) {
+    
+    
+    int     p, q;
+    int     me;
+    double  v;
+    int     my_error = 0;
+    int     P;
+    
+    
+    MPI_Comm_rank (MPI_COMM_WORLD, &me);
+    MPI_Comm_size (MPI_COMM_WORLD, &P);
+    
+    int     errors[P];
+
+    // Previous rows
+    int prev = 0;
+    for (int i = 0; i < me; i++) {
+        prev += m[i];
+    }
+    prev += 1;
+    
+    for (p = 0; p < m[me]; p++) {
+        for (q = 0; q < n; q++)  {
+            v = prev + (q * n + p);
+            
+            if ((signal[p*n+q][0] != v) || (signal[p*n+q][1] != v)) {
+                fprintf(stdout, "[%d]: ERROR in [%d,%d (%d)]:  expected: %4.1f  obtained %4.1f / %4.1f \n", me, p, q, prev, v, signal[p*n+q][0], signal[p*n+q][1]);
+                return (my_error = 1);
+            }
+        }
+    }
+    
+    return (EXIT_SUCCESS);
 }
 
 
@@ -73,9 +206,10 @@ int mpitranspose(
 
 /*----------------------------------------------------------------*/
 
+// Algorithm implementation
 
 
-/* TBI */
+/* To be improved (TBI) */
 static int isHomogeneous (const int *rowd, const int P) {
     
     int n_rows = rowd[0];
@@ -90,6 +224,50 @@ static int isHomogeneous (const int *rowd, const int P) {
 
 
 
+int mpitranspose(const int p,
+                 const int *rowd,
+                 const int ngroups /* NOT USED */,
+                 const int nthreadspergroup,
+                 const int *rowdlocal /* NOT USED */,
+                 const int N,
+                 fftw_complex* signal)
+{
+    
+    int me;
+    MPI_Comm_rank(MPI_COMM_WORLD, &me);
+    
+    int err = 0;
+    
+    if (test_transpose) {
+        mpi_hclFillSignal2D(rowd, N, nthreadspergroup, signal);
+        if (me == 0) fprintf(stdout, "Matrix BEFORE transposing ...\n");
+        mpi_hclPrintSignal2D(rowd, N, signal);
+    }
+    
+    
+    if (isHomogeneous(rowd, p)) {
+        err = HOM_transpose (p, rowd, ngroups, nthreadspergroup, rowdlocal, N, signal);
+    } else {
+        err = HET_transpose (p, rowd, ngroups, nthreadspergroup, rowdlocal, N, signal);
+    }
+
+    
+    if (test_transpose) {
+        if (me == 0) fprintf(stdout, "Matrix AFTER transposing ...\n");
+        mpi_hclPrintSignal2D(rowd, N, signal);
+        if (mpi_hclTestSignalTranspose2D(rowd, N, signal)) {
+            err = 1;
+        }
+    }
+    
+    return err;
+    
+}
+
+
+
+
+/*----------------------------------------------------------------*/
 
 
 static int HOM_transpose (const int p,
@@ -98,8 +276,7 @@ static int HOM_transpose (const int p,
                           const int nthreadspergroup,
                           const int *rowdlocal /* NOT USED */,
                           const int N,
-                          fftw_complex* gMatrix)
-
+                          fftw_complex* signal)
 {
     
     MPI_Datatype MPI_C_2D;
@@ -134,7 +311,7 @@ static int HOM_transpose (const int p,
     
     // Communication:
     // NOT IN PLACE:  MPI_Alltoall(sbuf, 1, MPI_TYPE_2D, rbuf, 1, MPI_TYPE_2D, MPI_COMM_WORLD);
-    int rc = MPI_Alltoall(MPI_IN_PLACE, 1, MPI_TYPE_2D, gMatrix, 1, MPI_TYPE_2D, MPI_COMM_WORLD);
+    int rc = MPI_Alltoall(MPI_IN_PLACE, 1, MPI_TYPE_2D, signal, 1, MPI_TYPE_2D, MPI_COMM_WORLD);
     
     if (rc != MPI_SUCCESS) {
         printf("[%d] Problems in MPI_Alltoall\n", rank);
@@ -146,7 +323,7 @@ static int HOM_transpose (const int p,
     
     
     /* Local transpose */
-    hcl_transpose_homogeneous (gMatrix, 0, rowd[rank],
+    hcl_transpose_homogeneous (signal, 0, rowd[rank],
                                N, nthreadspergroup, 1, rowd, 0);
     
     return (0);
@@ -157,12 +334,12 @@ static int HOM_transpose (const int p,
 
 
 static int HET_transpose (const int P,
-                            const int *rowd,
-                            const int ngroups /* NOT USED */,
-                            const int nthreadspergroup,
-                            const int *rowdlocal /* NOT USED */,
-                            const int N,
-                            fftw_complex* gMatrix)
+                          const int *rowd,
+                          const int ngroups /* NOT USED */,
+                          const int nthreadspergroup,
+                          const int *rowdlocal /* NOT USED */,
+                          const int N,
+                          fftw_complex* signal)
 
 {
     int  me;
@@ -231,47 +408,14 @@ static int HET_transpose (const int P,
         sdispls[p] = pos;
         rdispls[p] = (p==0) ? 0 : (rowd[p-1] * cplx_ext + rdispls[p-1]);
         
-        MPI_Pack((char *)gMatrix + (offset * cplx_ext), rowd[p], MPI_TYPE_COL, buf, tsize, &pos, MPI_COMM_WORLD);
+        MPI_Pack((char *)signal + (offset * cplx_ext), rowd[p], MPI_TYPE_COL, buf, tsize, &pos, MPI_COMM_WORLD);
         offset += rowd[p];
     }
     
     
-    /* TEMPORAL: imprimir datos *
-     sleep(me);
-     
-     fprintf(stdout, "\n______  %d  _____", me);
-     fprintf(stdout, "\nScount:   ");
-     for (int p = 0; p < P; p++) {
-     fprintf(stdout, "%4d", scounts[p]);
-     }
-     fprintf(stdout, "\nRcount:   ");
-     for (int p = 0; p < P; p++) {
-     fprintf(stdout, "%4d", rcounts[p]);
-     }
-     fprintf(stdout, "\nSdispls:  ");
-     for (int p = 0; p < P; p++) {
-     fprintf(stdout, "%4d", sdispls[p]);
-     }
-     fprintf(stdout, "\nRdispls:  ");
-     for (int p = 0; p < P; p++) {
-     fprintf(stdout, "%4d", rdispls[p]);
-     }
-     fprintf(stdout, "\nbuf:  ");
-     for (int i = 0; i < tsize / cplx_ext; i++) {
-     fprintf(stdout, "%2.1f", (double)buf[i*2]);
-     }
-     fprintf(stdout, "\n");
-     
-     sleep(P - me);
-     */
-    
-    
-    
     MPI_Alltoallw (buf,     scounts, sdispls, stypes,
-                   gMatrix, rcounts, rdispls, MPI_TYPE_2D,
+                   signal, rcounts, rdispls, MPI_TYPE_2D,
                    MPI_COMM_WORLD);
-    
-    
     
     free(buf);
     
@@ -283,19 +427,19 @@ static int HET_transpose (const int P,
         MPI_Type_free(&MPI_TYPE_2D[p]);
     }
     
-    
     return (EXIT_SUCCESS);
 }
 
 
 
+
 static int HET_transpose_2 (const int P,
-                          const int *rowd,
-                          const int ngroups /* NOT USED */,
-                          const int nthreadspergroup,
-                          const int *rowdlocal /* NOT USED */,
-                          const int N,
-                          fftw_complex* gMatrix)
+                            const int *rowd,
+                            const int ngroups /* NOT USED */,
+                            const int nthreadspergroup,
+                            const int *rowdlocal /* NOT USED */,
+                            const int N,
+                            fftw_complex* signal)
 
 {
     int  me;
@@ -346,7 +490,7 @@ static int HET_transpose_2 (const int P,
     int  offset = 0;
     
     int  MY_ALLTOALL_TAG = 100;
-
+    
     
     for (int p = 0; p < P; p++) {
         
@@ -358,20 +502,20 @@ static int HET_transpose_2 (const int P,
         MPI_Type_commit(&MPI_TYPE_2D);
         
         pos = 0;
-        MPI_Pack((char *)gMatrix + (offset * cplx_ext), rowd[p], MPI_TYPE_COL, buf, max_size, &pos, MPI_COMM_WORLD);
+        MPI_Pack((char *)signal + (offset * cplx_ext), rowd[p], MPI_TYPE_COL, buf, max_size, &pos, MPI_COMM_WORLD);
         // TBI: Se pueden crear otro tipo 2D por columnas para para PACK, aunque no creo que mejore.
-        //MPI_Pack((char *)gMatrix + (offset * cplx_ext), 1, MPI_TYPE_2D_COL, buf, max_size, &pos, MPI_COMM_WORLD);
+        //MPI_Pack((char *)signal + (offset * cplx_ext), 1, MPI_TYPE_2D_COL, buf, max_size, &pos, MPI_COMM_WORLD);
         
         if (p == me) {
             
             pos = 0;
-            MPI_Unpack(buf, max_size, &pos, (char *)gMatrix + (offset * cplx_ext), 1, MPI_TYPE_2D, MPI_COMM_WORLD);
+            MPI_Unpack(buf, max_size, &pos, (char *)signal + (offset * cplx_ext), 1, MPI_TYPE_2D, MPI_COMM_WORLD);
             
         } else {
             
             MPI_Request req;
             
-            MPI_Irecv((char *)gMatrix + (offset * cplx_ext), 1, MPI_TYPE_2D, p, MY_ALLTOALL_TAG, MPI_COMM_WORLD, &req);
+            MPI_Irecv((char *)signal + (offset * cplx_ext), 1, MPI_TYPE_2D, p, MY_ALLTOALL_TAG, MPI_COMM_WORLD, &req);
             MPI_Send(buf, scounts[p], MPI_PACKED, p, MY_ALLTOALL_TAG, MPI_COMM_WORLD);
             MPI_Wait(&req, MPI_STATUS_IGNORE);
             

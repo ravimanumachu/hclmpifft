@@ -21,8 +21,8 @@ ALPLIBDIR       =       /opt/cray/alps/default/lib64
 #---------------------------------------------------#
 
 COMMONINCLUDES	=	../tauloplib
-EXES		=	mpifftw_cluster
-SRC		=	mpifftw_cluster.c \
+EXES		=	mpifftw_bench
+SRC		=	mpifftw_cluster_bench.c \
 			../tauloplib/fpm_cluster.c \
             		../tauloplib/transpose.c \
 			../tauloplib/mpicomm.c \
@@ -31,9 +31,9 @@ SRC		=	mpifftw_cluster.c \
 
 #---------------------------------------------------#
 
-all: mpifftw_cluster
+all: mpifftw_bench
 
-mpifftw_cluster:
+mpifftw_bench:
 	${MPICC} ${COPTFLAGS} ${OMPFLAGS} -I${COMMONINCLUDES} \
 		-I${FFTWINCLUDES} -o $@ \
 		${SRC} -L${FFTWLIBDIR} \

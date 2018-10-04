@@ -1,11 +1,15 @@
 Files in this directory are duplicated:
 
 mpifftw.c is original file (working in a node)
-mpifftw_cluster.c is the file which work in the Hazel Hen cluster (HLRS).
+mpifftw_cluster.c is the file which work in the Hazel Hen cluster (HLRS). It calculates a FFTW transpose.
+mpifftw_cluster_bench.c is a file for benchmarking FFTW transposes.
 
-Cluster file includes a set of changes, as not to allocate all the matrices
-in every node (but only the rows everyone is going to calculate). It is implemented
-as a benchmark for measuring performance in the cluster.
+
+Cluster files include a set of changes, as not to allocate all the matrices
+in every node (but only the rows everyone is going to calculate).
+
+-----------------------------------------------------------------------------------------
+DISTRIBUTED FFTW)
 
 Makefile_cluster is a Makefile to compile mpifftw_cluster.c:
 
@@ -13,8 +17,40 @@ $ <load modules and export FFTWHOME=$HOME/software/hclmpifft/fftw-3.3.7>
 $ make clean
 $ make -f Makefile_cluster
 
-fftw2_script.sh is an example of script for launching "mpifftw" executable. Script takes as a parameter the size of the (square) matrix.
-Executable mpifftw takes the following parameters:
+fftw2_cluster.sh is an example of script for launching "mpifftw_cluster" executable. Script takes as parameter:
+
+P: number of processes
+N: size of the matrix.
+
+Example of 4 processes calculating FFTW of a N=10 matrix:
+$ ./fftw_cluster.sh 4 10
+
+Executable mpifftw_cluster takes the following parameters:
+N: size of the (square) matrix
+Q: number of groups threads in a node (processes per node)
+t: Number of threads in each group
+LB: load balanced or not
+v: verbose mode
+
+
+-----------------------------------------------------------------------------------------
+DISTRIBUTED FFTW BENCHMARK)
+
+Makefile_bench is a Makefile to compile mpifftw_cluster_bench.c:
+
+$ <load modules and export FFTWHOME=$HOME/software/hclmpifft/fftw-3.3.7>
+$ make clean
+$ make -f Makefile_bench
+
+fftw2_bench.sh is an example of script for launching "mpifftw_bench" executable. Script takes as parameter:
+
+P: number of processes
+N: size of the matrix.
+
+Example of 4 processes calculating FFTW of a N=10 matrix:
+$ ./fftw_bench.sh 4 10
+
+Executable mpifftw_bench takes the following parameters:
 N: size of the (square) matrix
 Q: number of groups threads in a node (processes per node)
 t: Number of threads in each group
