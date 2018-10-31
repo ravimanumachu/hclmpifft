@@ -6,7 +6,7 @@
 ####################################################
 
 CC              =       gcc
-MPICC           =       mpicc
+MPICC           =       mpicxx
 COPTFLAGS       =       -O3 -pthread
 OMPFLAGS        =       -fopenmp
 
@@ -18,6 +18,7 @@ FFTWLIBDIR      =       ${FFTWHOME}/lib
 #---------------------------------------------------#
 
 HOPTINCLUDES	=	../hpopt/HPOPT_INSTALL/include
+HOPTLIBS    	=	-L../hpopt/HPOPT_INSTALL/lib -lhpopt
 
 #---------------------------------------------------#
 
@@ -38,7 +39,8 @@ mpifftw:
 		-I${HOPTINCLUDES} \
 		-I${FFTWINCLUDES} -o $@ \
 		${SRC} -L${FFTWLIBDIR} \
-		-lfftw3_mpi -lfftw3 -lm
+		-lfftw3_mpi -lfftw3 \
+		${HOPTLIBS} -lm 
 
 clean:
 	rm -f ${EXES}

@@ -12,7 +12,7 @@
 
 int fftwlocal(
     const int sign,
-    const int* m,
+    const unsigned int* m,
     const int n,
     const int nThreadsPerGroup,
     const int nThreadGroups,

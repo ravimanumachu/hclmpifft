@@ -89,7 +89,7 @@ int mpi_hclFillSignal2D(const int *m, const int n, const unsigned int nt, fftw_c
 
 
 // Print matrix only if short enough
-int mpi_hclPrintSignal2D(const int *rowd, const int n, const fftw_complex* signal) {
+int mpi_hclPrintSignal2D(const int *rowd, const int n, fftw_complex* signal) {
     
     int  me;
     int  P;

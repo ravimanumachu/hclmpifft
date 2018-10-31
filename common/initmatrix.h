@@ -21,7 +21,7 @@ int hclFillSignal2D(
 
 int hclPrintSignal2D(
     const int m, const int n,
-    const fftw_complex* signal
+    fftw_complex* signal
 );
 
 /*----------------------------------------------------------------*/

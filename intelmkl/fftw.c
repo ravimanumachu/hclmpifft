@@ -43,7 +43,7 @@ int fftw1d(
 int
 fftw2dlocal(
     const int sign,
-    const int* m, const int n,
+    const unsigned int* m, const int n,
     fftw_complex* lMatrix,
     double* tGroups
 )
@@ -61,7 +61,7 @@ fftw2dlocal(
 int
 fftw2dlocal2(
     const int sign,
-    const int* m, const int n,
+    const unsigned int* m, const int n,
     const int nThreadsPerGroup,
     fftw_complex* lMatrix,
     double* tGroups
@@ -96,7 +96,7 @@ fftw2dlocal2(
 int
 fftw2dlocal4(
     const int sign,
-    const int* m, const int n,
+    const unsigned int* m, const int n,
     const int nThreadsPerGroup,
     fftw_complex* lMatrix,
     double* tGroups
@@ -148,7 +148,7 @@ fftw2dlocal4(
 
 int fftwlocal(
     const int sign,
-    const int* m,
+    const unsigned int* m,
     const int n,
     const int nThreadsPerGroup,
     const int nThreadGroups,

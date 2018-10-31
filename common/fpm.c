@@ -8,7 +8,7 @@
 
 int determineRowDistributionLB(
     const int n, const int p,
-    int* rowd
+    unsigned int* rowd
 )
 {
     /*

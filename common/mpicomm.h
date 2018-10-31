@@ -12,9 +12,9 @@
 
 int mpitranspose(
     const int p, 
-    const int *rowd, 
+    const unsigned int *rowd, 
     const int ngroups,
-    const int *rowdlocal,
+    const unsigned int *rowdlocal,
     const int n, 
     fftw_complex* gMatrix
 );

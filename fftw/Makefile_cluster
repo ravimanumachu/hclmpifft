@@ -7,7 +7,7 @@
 
 CC              =       gcc
 MPICC           =       mpicc
-COPTFLAGS       =       -O3 -pthread
+COPTFLAGS       =       -O3 -pthread -std=c99
 OMPFLAGS        =       -fopenmp
 
 #---------------------------------------------------#
@@ -20,7 +20,8 @@ ALPLIBDIR       =       /opt/cray/alps/default/lib64
 
 #---------------------------------------------------#
 
-COMMONINCLUDES	=	../tauloplib
+COMMONINCLUDES	=	../common
+TAULOPINCLUDES	=	../tauloplib
 EXES		=	mpifftw_cluster
 SRC		=	mpifftw_cluster.c \
 			../tauloplib/fpm_cluster.c \
@@ -34,9 +35,9 @@ SRC		=	mpifftw_cluster.c \
 all: mpifftw_cluster
 
 mpifftw_cluster:
-	${MPICC} ${COPTFLAGS} ${OMPFLAGS} -I${COMMONINCLUDES} \
-		-I${FFTWINCLUDES} -o $@ \
-		${SRC} -L${FFTWLIBDIR} \
+	${MPICC} ${COPTFLAGS} ${OMPFLAGS} -I${TAULOPINCLUDES} \
+		-I${COMMONINCLUDES} -I${FFTWINCLUDES} \
+		-o $@ ${SRC} -L${FFTWLIBDIR} \
 		-L${XPMLIBDIR} -L${ALPLIBDIR} \
 		-lfftw3_mpi -lfftw3 -lm
 
