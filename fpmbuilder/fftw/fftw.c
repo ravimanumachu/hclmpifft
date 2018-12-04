@@ -87,7 +87,12 @@ fftw2dlocal2(
     tend = end.tv_sec + end.tv_usec/1000000.;
     etime = (tend - tstart);
 
-#pragma omp parallel sections num_threads(nThreadsPerGroup)
+    gettimeofday(&start, NULL);
+
+    printf("g 2, t %d: Plan creation time %f\n", 
+          nThreadsPerGroup, etime);
+
+#pragma omp parallel sections num_threads(2)
 {
     #pragma omp section
     {
@@ -105,6 +110,13 @@ fftw2dlocal2(
        tGroups[1] += etime + omp_get_wtime() - ts;
     }
 }
+
+    gettimeofday(&end, NULL);
+    tstart = start.tv_sec + start.tv_usec/1000000.;
+    tend = end.tv_sec + end.tv_usec/1000000.;
+
+    printf("g 2, t %d: Plan execution time %f\n", 
+           nThreadsPerGroup, (tend - tstart));
 
     return 0;
 }
@@ -153,7 +165,7 @@ fftw2dlocal4(
     printf("g 4, t %d: Plan creation time %f\n", 
           nThreadsPerGroup, etime);
 
-#pragma omp parallel sections num_threads(nThreadsPerGroup)
+#pragma omp parallel sections num_threads(4)
 {
     #pragma omp section
     {
@@ -247,7 +259,7 @@ fftw2dlocal5(
     printf("g 5, t %d: Plan creation time %f\n", 
           nThreadsPerGroup, etime);
 
-#pragma omp parallel sections num_threads(nThreadsPerGroup)
+#pragma omp parallel sections num_threads(5)
 {
     #pragma omp section
     {
@@ -374,7 +386,7 @@ fftw2dlocal10(
     printf("g 10, t %d: Plan creation time %f\n", 
           nThreadsPerGroup, etime);
 
-#pragma omp parallel sections num_threads(nThreadsPerGroup)
+#pragma omp parallel sections num_threads(10)
 {
     #pragma omp section
     {
@@ -591,7 +603,7 @@ fftw2dlocal20(
     printf("g 20, t %d: Plan creation time %f\n", 
           nThreadsPerGroup, etime);
 
-#pragma omp parallel sections num_threads(nThreadsPerGroup)
+#pragma omp parallel sections num_threads(20)
 {
     #pragma omp section
     {

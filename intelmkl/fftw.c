@@ -67,7 +67,7 @@ fftw2dlocal2(
     double* tGroups
 )
 {
-#pragma omp parallel sections num_threads(nThreadsPerGroup)
+#pragma omp parallel sections num_threads(2)
 {
     #pragma omp section
     {
@@ -102,7 +102,7 @@ fftw2dlocal4(
     double* tGroups
 )
 {
-#pragma omp parallel sections num_threads(nThreadsPerGroup)
+#pragma omp parallel sections num_threads(4)
 {
     #pragma omp section
     {

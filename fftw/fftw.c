@@ -76,7 +76,7 @@ fftw2dlocal2(
                         sign, m[1], n,
                         lMatrix, lMatrix);
 
-#pragma omp parallel sections num_threads(nThreadsPerGroup)
+#pragma omp parallel sections num_threads(2)
 {
     #pragma omp section
     {
@@ -125,7 +125,7 @@ fftw2dlocal4(
                         sign, m[3], n,
                         lMatrix, lMatrix);
 
-#pragma omp parallel sections num_threads(nThreadsPerGroup)
+#pragma omp parallel sections num_threads(4)
 {
     #pragma omp section
     {
