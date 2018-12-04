@@ -1,7 +1,6 @@
 
 /*----------------------------------------------------------------*/
 
-#define _GNU_SOURCE
 #include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -23,7 +22,7 @@
 
 int main(int argc, char** argv)
 {
-    if (argc != 6)
+    if (argc != 7)
     {
        fprintf(
           stderr,
@@ -61,11 +60,16 @@ int main(int argc, char** argv)
 
     double* tGroups = (double*)calloc(nGroups, sizeof(double));
     int group;
-    int* rowd = (int*)malloc(sizeof(int)*nGroups);
+    unsigned int* rowd = (unsigned int*)malloc(sizeof(unsigned int)*nGroups);
     for (group = 0; group < nGroups; group++)
     {
-        rowd[group] = N1;
+        rowd[group] = N1 / nGroups;
     }
+
+    double tstart, tend;
+    struct timeval start, end;
+
+    gettimeofday(&start, NULL);
 
     int invocation;
     for (invocation  = 0; invocation < numInvocations; invocation++)
@@ -75,35 +79,45 @@ int main(int argc, char** argv)
           nThreadsPerGroup, nGroups, lMatrix, tGroups);
     }
 
+    gettimeofday(&end, NULL);
+
+    tstart = start.tv_sec + start.tv_usec/1000000.;
+    tend = end.tv_sec + end.tv_usec/1000000.;
+
     fftw_cleanup_threads();
-    free(rowd);
     fftw_free(lMatrix);
-    free(tGroups);
 
     unsigned int team;
-    double avg = 0.;
+    double max = 0.;
     for (team = 0; team < nGroups; team++)
     {
         double t = tGroups[team] / (double)numInvocations;
-        avg += t;
 
-        double pSize = (double)N1*(double)N2;
-        double speed = 2.5 * pSize * log2(pSize) / t;
+        if (t > max)
+        {
+           max = t;
+        }
+
+        double pSize = (double)rowd[team]*(double)N2;
+        double speed = 5.0 * pSize * log2(pSize) / t;
         double mflops = speed * 1e-06;
         printf(
-            "m=%d, n=%d, time(sec)=%0.6f, Speed(mflops)=%0.6f\n",
-            N1, N2, t, mflops
+            "Team %d: m=%d, n=%d, time(sec)=%0.6f, Speed(mflops)=%0.6f\n",
+            team, rowd[team], N2, t, mflops
         );
     }
 
-    avg = avg / 4.0;
+    free(rowd);
+    free(tGroups);
+
+    double etime = (tend - tstart) / (double)numInvocations;
     double pSize = (double)N1*(double)N2;
-    double speed = 2.5 * pSize * log2(pSize) / avg;
+    double speed = 5.0 * pSize * log2(pSize) / etime;
     double mflops = speed * 1e-06;
 
     printf(
-        "m=%d, n=%d, time(sec)=%0.6f, Average speed(mflops)=%0.6f\n",
-        N1, N2, avg, mflops
+        "m=%d, n=%d, time(sec)=%0.6f, Speed(mflops)=%0.6f\n",
+        N1, N2, etime, mflops
     );
 
     exit(EXIT_SUCCESS);

@@ -1,7 +1,6 @@
 
 /*----------------------------------------------------------------*/
 
-#define _GNU_SOURCE
 #include <sched.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,7 +57,7 @@ int main(int argc, char** argv)
     hclFillSignal2D(
        N, N, nThreadsPerGroup*nGroups, lMatrix);
 
-    int* rowd = (int*)malloc(nGroups*sizeof(int));
+    unsigned int* rowd = (unsigned int*)malloc(nGroups*sizeof(unsigned int));
     determineRowDistributionLB(
        N, nGroups, rowd);
 
